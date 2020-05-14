@@ -9,7 +9,7 @@ import math
 def main():
 
     g = graph.getGraphList()
-    #wtf
+
     # ================================== КРАТЧАЙШИЕ ПУТИ ====================================
 
     buildings_list = xmlparser.getBuildingsNodes()
@@ -52,7 +52,7 @@ def main():
 
      # ============================= 1.1 =====================================
 
-    print('Задание 1')
+    print('\nЗадание 1')
 
     building_nearest_objects = {}
     for node_b in buildings:
@@ -88,7 +88,7 @@ def main():
 
     # ============================= 1.2 =====================================
 
-    print('Задание 2. Определить, какой из объектов расположен так, что время/расстояние между ним и самым дальним домом минимально')
+    print('\nЗадание 2. Определить, какой из объектов расположен так, что время/расстояние между ним и самым дальним домом минимально')
 
     object_furthest_buildings = {}
     for node_h in hospitals:
@@ -119,7 +119,7 @@ def main():
         object_furthest_buildings[node_h]['fromto'] = furthest_fromto
 
 
-    print('Туда: ')
+    print('\nТуда: ')
     min_max = math.inf
     ans = ''
     for node_h in hospitals:
@@ -129,7 +129,7 @@ def main():
     print('Ответ: ', ans)
     print('Расстояние до дома с номером ', object_furthest_buildings[ans]['from'], ' равно: ', min_max)
 
-    print('Обратно: ')
+    print('\nОбратно: ')
     min_max = math.inf
     ans = ''
     for node_h in hospitals:
@@ -139,7 +139,7 @@ def main():
     print('Ответ: ', ans)
     print('Расстояние от дома с номером ', object_furthest_buildings[ans]['to'], ' равно: ', min_max)
 
-    print('Туда и обратно: ')
+    print('\nТуда и обратно: ')
     min_max = math.inf
     ans = ''
     for node_h in hospitals:
@@ -152,7 +152,7 @@ def main():
         
     # ============================= 1.3 =====================================
 
-    print('Задание 3. Для какого объекта инфраструктуры сумма кратчайших расстояний от него до всех домов минимальна.')
+    print('\nЗадание 3. Для какого объекта инфраструктуры сумма кратчайших расстояний от него до всех домов минимальна.')
 
     ans = ''
     min_sum = math.inf
@@ -169,7 +169,7 @@ def main():
 
     # ============================= 1.4 =====================================
 
-    print('Задание 4. Для какого объекта инфраструктуры построенное дерево кратчайших путей имеет минимальный вес.')
+    print('\nЗадание 4. Для какого объекта инфраструктуры построенное дерево кратчайших путей имеет минимальный вес.')
 
     min_weight = math.inf
     ans = ''
@@ -191,16 +191,15 @@ def main():
     print('Ответ: ', ans)
     print('Вес дерева: ', min_weight)
 
-    # ============================== Интерфейс =======================================     
-            
+    # ============================== Интерфейс =======================================
     while(True):
-        print('Просмотреть информацию о больницах? Y/N ')
-        if (input() == 'Y'):
+        print('\nПросмотреть информацию о больницах? Y/N ')
+        if (input().lower() == 'y'):
             print('Номера N узлов-больниц: ')
-            for i in hospitals:
-                print(i)
+            for i, x in enumerate(hospitals):
+                print(i, ': ', x, sep='')
             print('Введите номер узла-больницы: ')
-            node_h = str(input())
+            node_h = hospitals[int(input())]
             print('Ближайший дом: ')
             min_dist = math.inf
             nearest_building = ''
@@ -218,12 +217,12 @@ def main():
             break
 
         print('Просмотреть информацию о домах? Y/N ')
-        if (input() == 'Y'):
+        if (input().lower() == 'y'):
             print('Номера M узлов-домов: ')
-            for i in buildings:
-                print(i)
+            for i, x in enumerate(buildings):
+                print(i, ': ', x, sep='')
             print('Введите номер узла-дома: ')
-            node_b = str(input())
+            node_b = buildings[int(input())]
             print('Ближайшая больница: ')
             min_dist = math.inf
             nearest_hospital = ''
