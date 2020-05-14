@@ -9,7 +9,7 @@ import math
 def main():
 
     g = graph.getGraphList()
-
+    #wtf
     # ================================== КРАТЧАЙШИЕ ПУТИ ====================================
 
     buildings_list = xmlparser.getBuildingsNodes()
