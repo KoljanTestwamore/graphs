@@ -100,7 +100,7 @@ def getGraphList():
 #     return result
 
 def NearestNode(G,coords,obj):
-    print('Ищем вершину, ближайшую к: ', obj, '...')
+    # print('Ищем вершину, ближайшую к: ', obj, '...')
     
     (obj_lat, obj_lon) = coords[obj]
     obj_lat = float(obj_lat)
@@ -117,8 +117,21 @@ def NearestNode(G,coords,obj):
             result = node
     return result
 
+def NearestNode2(G,coords,obj_lat,obj_lon):
+    min_dist = math.inf
+
+    for node in G:
+        (lat,lon) = coords[node]
+        lat = float(lat)
+        lon = float(lon)
+        distance = (lat-obj_lat)**2 + (lon-obj_lon)**2
+        if (distance < min_dist):
+            min_dist = distance
+            result = node
+    return result
+
 def Dijkstra(G, start_node):
-    print('Строим дерево кратчайших путей из вершины: ', start_node, '...')
+    # print('Строим дерево кратчайших путей из вершины: ', start_node, '...')
     D = {}
     Parent = {}
 
@@ -145,7 +158,7 @@ def Dijkstra(G, start_node):
                 Parent[child_node] = curr_node
                 heapq.heappush(q,(D[child_node],child_node))
 
-    print('Дерево построено')
+    # print('Дерево построено')
     return (D,Parent)
 
 def getWayInTree(Parent, start_node, end_node):
@@ -158,6 +171,28 @@ def getWayInTree(Parent, start_node, end_node):
         way.insert(0, curr_node)
 
     return way
+
+
+def getSubtreeEdges(Parent, start_node, end_nodes):
+
+    subtree_edges = {}
+    for end_node in end_nodes:
+        way = getWayInTree(Parent,start_node,end_node)
+        for i in range(len(way) - 1):
+            subtree_edges[way[i]] = way[i+1]
+
+    return subtree_edges
+
+def getSubtreeWeight(subtree_edges, G):
+
+    subtree_weight = 0
+
+    for node_1 in subtree_edges:
+        node_2 = subtree_edges[node_1]
+        subtree_weight = subtree_weight + G[node_1][node_2]
+        
+    return subtree_weight
+
 
 
 
