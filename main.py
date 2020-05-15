@@ -5,17 +5,50 @@ import matplotlib.pyplot as plt
 import random
 import numpy as np
 import math
+import cluster
+import csv
+import visualisation
+import pandas as pd
 
 def main():
 
-    g = graph.getGraphList()
+    # ============================= Генерация графа ==============================
 
+    # g = graph.getGraphList()
+
+    # ============================ Запись графа в файл ============================
+
+    # with open('graph.csv', 'w') as csv_file:
+    #     writer = csv.writer(csv_file, delimiter = ',')
+    #     for node in g:
+    #         line_csv = []
+    #         line_csv.append(node)
+    #         for adj_node in g[node]:
+    #             line_csv.append(adj_node)
+    #             line_csv.append(g[node][adj_node])
+    #         writer.writerow(line_csv)       
+
+    # ============================ Чтение графа из файла ==========================
+
+    g = {}
+    file_name = 'graph.csv'
+    f = open(file_name, 'r')
+    for line in f.readlines():
+        dates = line.split(',')
+        dates[len(dates)-1] = dates[len(dates)-1][:len(dates[len(dates)-1])-1]
+        g[dates[0]] = {}
+        r = int((len(dates) - 1)/2)
+        for i in range(r):
+            g[dates[0]][dates[2*i+1]] = float(dates[2*i+2])
+    del g['']
+    f.close()
+    
     # ================================== КРАТЧАЙШИЕ ПУТИ ====================================
 
     buildings_list = xmlparser.getBuildingsNodes()
     hospitals_list = xmlparser.getHospitalsNodes()
     N = 10
-    M = 10
+    M = 100
     buildings = []
     hospitals = []
     coords = xmlparser.getNodesCoords()
@@ -26,33 +59,61 @@ def main():
     while (len(buildings) < M):
         buildings.append(graph.NearestNode(g, coords, random.choice(buildings_list)))
 
-    building_trees = {}
-    hospital_trees = {}
+    all_ways_exist = False
+    while(not all_ways_exist):
 
-    for node in hospitals:
-        hospital_trees[node] = graph.Dijkstra(g, node)
+        building_trees = {}
+        hospital_trees = {}
 
-    for node in buildings:
-        building_trees[node] = graph.Dijkstra(g, node)
+        for node in hospitals:
+            hospital_trees[node] = graph.Dijkstra(g, node)
 
-    buildings_to_hospitals = {}
-    hospitals_to_buildings = {}
+        for node in buildings:
+            building_trees[node] = graph.Dijkstra(g, node)
 
-    for node_h in hospitals:
-        hospitals_to_buildings[node_h] = {}
+        buildings_to_hospitals = {}
+        hospitals_to_buildings = {}
+
         for node_b in buildings:
-            (D, Parent) = hospital_trees[node_h]
-            hospitals_to_buildings[node_h][node_b] = D[node_b]
+            buildings_to_hospitals[node_b] = {}
+            for node_h in hospitals:
+                (D, Parent) = building_trees[node_b]
+                buildings_to_hospitals[node_b][node_h] = D[node_h]
 
-    for node_b in buildings:
-        buildings_to_hospitals[node_b] = {}
+
         for node_h in hospitals:
-            (D, Parent) = building_trees[node_b]
-            buildings_to_hospitals[node_b][node_h] = D[node_h]
+            hospitals_to_buildings[node_h] = {}
+            for node_b in buildings:
+                (D, Parent) = hospital_trees[node_h]
+                hospitals_to_buildings[node_h][node_b] = D[node_b]
+
+        isolated_building = ''
+        for node_b in buildings:
+            for node_h in buildings_to_hospitals[node_b]:
+                if (buildings_to_hospitals[node_b][node_h] == math.inf):
+                    isolated_building = node_b
+                    
+        if (isolated_building != ''):
+            buildings.remove(isolated_building)
+            buildings.append(graph.NearestNode(g, coords, random.choice(buildings_list)))
+            continue
+
+        all_ways_exist = True
+
+    # ============================= Запись деревьев в csv ===========================
+    
+    # for i in range(len(buildings)):
+    #     tree = pd.DataFrame(building_trees[buildings[i]])
+    #     tree.to_csv('trees/buildings/building_'+str(i)+'.csv')
+
+    # for i in range(len(hospitals)):
+    #     tree = pd.DataFrame(hospital_trees[hospitals[i]])
+    #     tree.to_csv('trees/hospitals/hospital_'+str(i)+'.csv')
+
 
      # ============================= 1.1 =====================================
 
-    print('\nЗадание 1')
+    print('Задание 1.1')
 
     building_nearest_objects = {}
     for node_b in buildings:
@@ -86,9 +147,9 @@ def main():
     print('Ближайшие больницы для каждого дома: ')
     print(building_nearest_objects)
 
-    # ============================= 1.2 =====================================
+   # ============================= 1.2 =====================================
 
-    print('\nЗадание 2. Определить, какой из объектов расположен так, что время/расстояние между ним и самым дальним домом минимально')
+    print('Задание 1.2. Определить, какой из объектов расположен так, что время/расстояние между ним и самым дальним домом минимально')
 
     object_furthest_buildings = {}
     for node_h in hospitals:
@@ -119,7 +180,7 @@ def main():
         object_furthest_buildings[node_h]['fromto'] = furthest_fromto
 
 
-    print('\nТуда: ')
+    print('Туда: ')
     min_max = math.inf
     ans = ''
     for node_h in hospitals:
@@ -129,7 +190,7 @@ def main():
     print('Ответ: ', ans)
     print('Расстояние до дома с номером ', object_furthest_buildings[ans]['from'], ' равно: ', min_max)
 
-    print('\nОбратно: ')
+    print('Обратно: ')
     min_max = math.inf
     ans = ''
     for node_h in hospitals:
@@ -139,12 +200,12 @@ def main():
     print('Ответ: ', ans)
     print('Расстояние от дома с номером ', object_furthest_buildings[ans]['to'], ' равно: ', min_max)
 
-    print('\nТуда и обратно: ')
+    print('Туда и обратно: ')
     min_max = math.inf
     ans = ''
     for node_h in hospitals:
-        if (hospitals_to_buildings[node_h][object_furthest_buildings[node_h]['fromto']] <= min_max):
-            min_max = hospitals_to_buildings[node_h][object_furthest_buildings[node_h]['fromto']] 
+        if (hospitals_to_buildings[node_h][object_furthest_buildings[node_h]['fromto']] + buildings_to_hospitals[object_furthest_buildings[node_h]['fromto']][node_h] <= min_max):
+            min_max = hospitals_to_buildings[node_h][object_furthest_buildings[node_h]['fromto']] + buildings_to_hospitals[object_furthest_buildings[node_h]['fromto']][node_h] 
             ans = node_h
     print('Ответ: ', ans)
     print('Расстояние до+от дома с номером ', object_furthest_buildings[ans]['fromto'], ' равно: ', min_max)
@@ -152,7 +213,7 @@ def main():
         
     # ============================= 1.3 =====================================
 
-    print('\nЗадание 3. Для какого объекта инфраструктуры сумма кратчайших расстояний от него до всех домов минимальна.')
+    print('Задание 1.3. Для какого объекта инфраструктуры сумма кратчайших расстояний от него до всех домов минимальна.')
 
     ans = ''
     min_sum = math.inf
@@ -169,114 +230,110 @@ def main():
 
     # ============================= 1.4 =====================================
 
-    print('\nЗадание 4. Для какого объекта инфраструктуры построенное дерево кратчайших путей имеет минимальный вес.')
+    print('Задание 1.4. Для какого объекта инфраструктуры построенное дерево кратчайших путей имеет минимальный вес.')
 
     min_weight = math.inf
     ans = ''
+
     for node_h in hospitals:
         (D, Parent) = hospital_trees[node_h]
-        tree_edges = {}
-        for node_b in buildings:
-            way = graph.getWayInTree(Parent,node_h,node_b)
-            for i in range(len(way) - 1):
-                tree_edges[way[i]] = way[i+1]
-        tree_weight = 0
-        for node_1 in tree_edges:
-            node_2 = tree_edges[node_1]
-            tree_weight = tree_weight + g[node_1][node_2]
-        if (tree_weight < min_weight):
-            min_weight = tree_weight
+        subtree_edges = graph.getSubtreeEdges(Parent,node_h,buildings)
+        subtree_weight = graph.getSubtreeWeight(subtree_edges,g)
+        if (subtree_weight < min_weight):
+            min_weight = subtree_weight
             ans = node_h
     
     print('Ответ: ', ans)
     print('Вес дерева: ', min_weight)
 
-    # ============================== Интерфейс =======================================
-    while(True):
-        print('\nПросмотреть информацию о больницах? Y/N ')
-        if (input().lower() == 'y'):
-            print('Номера N узлов-больниц: ')
-            for i, x in enumerate(hospitals):
-                print(i, ': ', x, sep='')
-            print('Введите номер узла-больницы: ')
-            node_h = hospitals[int(input())]
-            print('Ближайший дом: ')
-            min_dist = math.inf
-            nearest_building = ''
-            for node_b in buildings:
-                if hospitals_to_buildings[node_h][node_b] < min_dist:
-                    nearest_building = node_b
-                    min_dist = hospitals_to_buildings[node_h][node_b]
-            print(nearest_building)
-            print('Расстояние до него: ')
-            print(min_dist)
-            print('Путь до него: ')
-            (D, Parent) = hospital_trees[node_h]
-            print(graph.getWayInTree(Parent, node_h, nearest_building))
-        else:
-            break
 
-        print('Просмотреть информацию о домах? Y/N ')
-        if (input().lower() == 'y'):
-            print('Номера M узлов-домов: ')
-            for i, x in enumerate(buildings):
-                print(i, ': ', x, sep='')
-            print('Введите номер узла-дома: ')
-            node_b = buildings[int(input())]
-            print('Ближайшая больница: ')
-            min_dist = math.inf
-            nearest_hospital = ''
-            for node_h in hospitals:
-                if buildings_to_hospitals[node_b][node_h] < min_dist:
-                    nearest_hospital = node_h
-                    min_dist = buildings_to_hospitals[node_b][node_h]
-            print(nearest_hospital)
-            print('Расстояние до неё: ')
-            print(min_dist)
-            print('Путь до неё: ')
-            (D, Parent) = building_trees[node_b]
-            print(graph.getWayInTree(Parent, node_b, nearest_hospital))
-        else:
-            break
+    # ============================== Интерфейс =======================================     
+            
+    # while(True):
+    #     print('Просмотреть информацию о больницах? Y/N ')
+    #     if (input() == 'Y'):
+    #         print('Номера N узлов-больниц: ')
+    #         for i in hospitals:
+    #             print(i)
+    #         print('Введите номер узла-больницы: ')
+    #         node_h = str(input())
+    #         print('Ближайший дом: ')
+    #         min_dist = math.inf
+    #         nearest_building = ''
+    #         for node_b in buildings:
+    #             if hospitals_to_buildings[node_h][node_b] < min_dist:
+    #                 nearest_building = node_b
+    #                 min_dist = hospitals_to_buildings[node_h][node_b]
+    #         print(nearest_building)
+    #         print('Расстояние до него: ')
+    #         print(min_dist)
+    #         print('Путь до него: ')
+    #         (D, Parent) = hospital_trees[node_h]
+    #         print(graph.getWayInTree(Parent, node_h, nearest_building))
+    #     else:
+    #         break
 
-
-
-
-    # ========================= ВИЗУАЛИЗАЦИЯ через networkx ==============================
-
-    # G = nx.Graph()
-    # for node in g.keys():
-    #     G.add_node(node)
-    #     for adj_node in g[node]:
-    #         G.add_edge(node,adj_node, weight=g[node][adj_node])
-
-    # nodesi = xmlparser.getNodesCoords()
-    # print('Рисуем граф...')
-    # nx.draw_networkx(G, pos=nodesi, node_size=0.1, width=0.2, with_labels=False, node_color='black', edge_color='black')
-    # fig = plt.gcf()
-    # fig.set_size_inches(8, 12, forward=True)
-    # file_name = 'Tomsk'+'.png'
-    # plt.savefig(file_name, dpi=100)
-    # fig.clear() 
+    #     print('Просмотреть информацию о домах? Y/N ')
+    #     if (input() == 'Y'):
+    #         print('Номера M узлов-домов: ')
+    #         for i in buildings:
+    #             print(i)
+    #         print('Введите номер узла-дома: ')
+    #         node_b = str(input())
+    #         print('Ближайшая больница: ')
+    #         min_dist = math.inf
+    #         nearest_hospital = ''
+    #         for node_h in hospitals:
+    #             if buildings_to_hospitals[node_b][node_h] < min_dist:
+    #                 nearest_hospital = node_h
+    #                 min_dist = buildings_to_hospitals[node_b][node_h]
+    #         print(nearest_hospital)
+    #         print('Расстояние до неё: ')
+    #         print(min_dist)
+    #         print('Путь до неё: ')
+    #         (D, Parent) = building_trees[node_b]
+    #         print(graph.getWayInTree(Parent, node_b, nearest_hospital))
+    #     else:
+    #         break
 
 
-    # ============================== через Matplotlib ============================================
-    # coords = xmlparser.getNodesCoords()
 
-    # fig = plt.gcf()
-    # fig.set_size_inches(24, 24, forward=True)
-    # i = 0
-    # for node in g:
-    #     (node_lat, node_lon) = coords[node]
-    #     for adj_node in g[node]:
-    #         (adj_node_lat,adj_node_lon) = coords[adj_node]
-    #         plt.plot([node_lat,node_lon], [adj_node_lat,adj_node_lon], 'black')
-    #     i = i + 1
-    #     print(i)
-    # fig.savefig('Tomsk.png', dpi=100)
-    # plt.show()
+    # ================================= 2 задание ======================================
+
+    print ('Задание 2')
+
+    hospital = hospitals[0]
+    (D,Parent) = hospital_trees[hospital]
+    subtree_edges = graph.getSubtreeEdges(Parent,hospital,buildings)
+    weight = graph.getSubtreeWeight(subtree_edges,g)
+    sum_w = 0
+    for node_b in buildings:
+        sum_w = sum_w + D[node_b]
+    print('Длина дерева:',weight)
+    print('Сумма расстояний:',sum_w)
+
+
+    for n in [2,3,5]:
+        print(n,'кластеров: ')
+        clusters = cluster.Clustering(buildings,g,n)
+        centers = cluster.FindCenters(clusters,g,coords)
+        subtree_edges_obj = graph.getSubtreeEdges(Parent,hospital,centers)
+        sum_w = 0
+        subtree_edges = subtree_edges_obj.copy()
+        for i in range(len(clusters)):
+            sum_w = sum_w + D[centers[i]]
+            (D_cluster,Parent_cluster) = graph.Dijkstra(g,centers[i])
+            subtree_edges_cluster = graph.getSubtreeEdges(Parent_cluster,centers[i],clusters[i])
+            subtree_edges.update(subtree_edges_cluster)
+            for node in clusters[i]:
+                sum_w = sum_w + D_cluster[node]
+        weight = graph.getSubtreeWeight(subtree_edges,g)
+        print('Длина дерева:',weight)
+        print('Сумма расстояний:',sum_w)
+        visualisation.drawClusters(buildings,clusters,n,g,coords)
+        # cluster_info = pd.DataFrame(clusters)
+        # cluster_info.to_csv('clusters/cluster_'+str(n)+'.csv')
+
     
-
-
 if __name__ == "__main__":
     main()
