@@ -136,16 +136,7 @@ def getStreets():
 
 def getRoads():
     streets = []
-    not_roads = []
-    not_roads.append('pedestrian')
-    not_roads.append('footway')
-    not_roads.append('bridleway')
-    not_roads.append('steps')
-    not_roads.append('path')
-    not_roads.append('sidewalk')
-    not_roads.append('cycleway')
-    not_roads.append('construction')
-
+    not_roads = ['pedestrian', 'footway', 'bridleway','steps','sidewalk','cycleway','construction']
     for child in db.iter('way'):
         way = child
         vals = {'refs': []}
